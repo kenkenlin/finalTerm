@@ -22,6 +22,12 @@ for (n in 1:nrow(BirFrom_1981)) {
   }
 }
 library(ggplot2)
+logmax<-log10(max(BirFrom_1981$`Crude Birth Rate (0/00)`))
+BirFrom_1981$xxxxx<-NA
+for (n in 1:nrow(BirFrom_1981)) {
+  BirFrom_1981$xxxxx[n]<-log10(BirFrom_1981$`Crude Birth Rate (0/00)`[n])/logmax
+}
+
 
 ggplot(BirFrom_1981,
        aes(x = `Year (Month)`,
@@ -60,8 +66,6 @@ dealBirth_1<-colSums( dealBirth[grepl("北",dealBirth$Locality),-1],na.rm =T)
 dealBirthFinal<-rbind(dealBirthFinal,c("新北市",dealBirth_1))
 dealBirth_1<-colSums( dealBirth[grepl("宜蘭",dealBirth$Locality),-1],na.rm =T)
 dealBirthFinal<-rbind(dealBirthFinal,c("宜蘭縣",dealBirth_1))
-dealBirth_1<-colSums( dealBirth[grepl("新竹",dealBirth$Locality),-1],na.rm =T)
-dealBirthFinal<-rbind(dealBirthFinal,c("新竹縣",dealBirth_1))
 dealBirth_1<-colSums( dealBirth[grepl("苗栗",dealBirth$Locality),-1],na.rm =T)
 dealBirthFinal<-rbind(dealBirthFinal,c("苗栗縣",dealBirth_1))
 dealBirth_1<-colSums( dealBirth[grepl("彰化",dealBirth$Locality),-1],na.rm =T)
@@ -70,8 +74,6 @@ dealBirth_1<-colSums( dealBirth[grepl("南投",dealBirth$Locality),-1],na.rm =T)
 dealBirthFinal<-rbind(dealBirthFinal,c("南投縣",dealBirth_1))
 dealBirth_1<-colSums( dealBirth[grepl("雲林",dealBirth$Locality),-1],na.rm =T)
 dealBirthFinal<-rbind(dealBirthFinal,c("雲林縣",dealBirth_1))
-dealBirth_1<-colSums( dealBirth[grepl("嘉義",dealBirth$Locality),-1],na.rm =T)
-dealBirthFinal<-rbind(dealBirthFinal,c("嘉義縣",dealBirth_1))
 dealBirth_1<-colSums( dealBirth[grepl("屏東",dealBirth$Locality),-1],na.rm =T)
 dealBirthFinal<-rbind(dealBirthFinal,c("屏東縣",dealBirth_1))
 dealBirth_1<-colSums( dealBirth[grepl("臺東",dealBirth$Locality),-1],na.rm =T)
@@ -92,16 +94,8 @@ dealBirth_1<-colSums( dealBirth[grepl("嘉義市",dealBirth$Locality),-1],na.rm 
 dealBirthFinal<-rbind(dealBirthFinal,c("嘉義市",dealBirth_1))
 dealBirth_1<-colSums( dealBirth[grepl("嘉義縣",dealBirth$Locality),-1],na.rm =T)
 dealBirthFinal<-rbind(dealBirthFinal,c("嘉義縣",dealBirth_1))
-dealBirth_1<-colSums( dealBirth[grepl("彰化縣",dealBirth$Locality),-1],na.rm =T)
-dealBirthFinal<-rbind(dealBirthFinal,c("彰化縣",dealBirth_1))
-dealBirth_1<-colSums( dealBirth[grepl("嘉義市",dealBirth$Locality),-1],na.rm =T)
-dealBirthFinal<-rbind(dealBirthFinal,c("嘉義市",dealBirth_1))
-dealBirth_1<-colSums( dealBirth[grepl("臺東縣",dealBirth$Locality),-1],na.rm =T)
-dealBirthFinal<-rbind(dealBirthFinal,c("臺東縣",dealBirth_1))
 dealBirth_1<-colSums( dealBirth[grepl("臺灣省",dealBirth$Locality),-1],na.rm =T)
 dealBirthFinal<-rbind(dealBirthFinal,c("臺灣省",dealBirth_1))
-dealBirth_1<-colSums( dealBirth[grepl("澎湖縣",dealBirth$Locality),-1],na.rm =T)
-dealBirthFinal<-rbind(dealBirthFinal,c("澎湖縣",dealBirth_1))
 colnames(dealBirthFinal)[1]<-"Locality"
 dealBirthFinal<-data.frame(dealBirthFinal)
 dealBirthFinal$Locality<-as.factor(dealBirthFinal$Locality)
@@ -133,3 +127,76 @@ ggplot(BirthCounty.m, aes(variable, Locality)) +
     low = "white",high = "steelblue")+
   theme(axis.text.x = element_text(angle = 90, hjust = 1,vjust = 0.5))
 
+#-----------------------------------月份----------------------
+library(dplyr)
+library(ggplot2)
+
+Bir_by_month<-Birth_1[grep("月",Birth_1$`Year (Month)`),]
+Bir_by_month$Year<-NA
+for (n in 1:nrow(Bir_by_month)%/%12) {
+  m<-12*n-11
+  k<-12*n
+  Bir_by_month$Year[m:k]<-(n+1999)
+}
+Bir_by_month<-Bir_by_month[,c(20,1:19)]
+Bir_by_month$Year[217:221]<-2018
+
+Bir_by_month_final<-group_by(Bir_by_month,`Year (Month)`)%>%
+  summarise(
+    "Crude Birth Rate (0/00)"=mean(`Crude Birth Rate (0/00)`)
+  )
+Bir_by_month_final$number<-c(1,7,9,2,8,10,11,12,3,5,6,4)
+Bir_by_month_final<-arrange(Bir_by_month_final,number)
+Bir_by_month_final$`Year (Month)`<-factor(Bir_by_month_final$`Year (Month)`,
+                                          levels = Bir_by_month_final$`Year (Month)`)
+
+qplot(`Year (Month)` , `Crude Birth Rate (0/00)`, 
+      data = Bir_by_month_final)+theme_bw()
+
+###############各縣市特愛生效面輛####
+library(maptools) #for readShapeSpatial()
+library(rgdal)#for fortify()
+library(rgeos) #for fortify()
+tw_new <- readShapeSpatial("TOWN_MOI_1070330.shp") 
+head(tw_new$COUNTYID)
+tw_new.df <- 
+  fortify(tw_new, region = "COUNTYID") 
+tw_new.df
+
+dealBirthFinal_1<-dealBirthFinal
+dealBirthFinal_1<-NULL
+dealBirthFinal_1$Locality<-dealBirthFinal$Locality
+dealBirthFinal_1<-data.frame(dealBirthFinal_1,
+      matrix(NA,nrow = 18,ncol = 27))
+for (i in 2:ncol(dealBirthFinal)) {
+  for (j in 1:17) {
+    dealBirthFinal_1[j,i]<-as.numeric(as.character(dealBirthFinal[j,i]))/
+      as.numeric(as.character(dealBirthFinal[18,i]))
+  }
+}
+colnames(dealBirthFinal_1)[-1]<-ods_sheets("BirthRate_81_107.ods")[-1]
+
+
+BirFrom_1994to2017<-melt(dealBirthFinal_1[,c(-2,-27:-28)],id.vars = "Locality"  )
+BirFrom_1994to2017$variable<-
+  as.character(BirFrom_1994to2017$variable)
+BirFrom_1994to2017$variable<-
+  as.numeric(BirFrom_1994to2017$variable)
+BirFrom_1994to2017$value<-
+  as.numeric(BirFrom_1994to2017$value)
+BirFrom_1994to2017<-arrange(BirFrom_1994to2017,variable)
+BirFrom_1994to2017$Animal<-0
+for (n in 1:nrow(BirFrom_1994to2017)%/%18) {
+  m<-18*n-17
+  k<-18*n
+  p<-(n+9)%%12+1
+  BirFrom_1994to2017$Animal[m:k]<-p
+}
+
+
+BirFrom_1994to2017$Animal<-as.factor(BirFrom_1994to2017$Animal)
+BirFrom_1994to2017<-BirFrom_1994to2017%>%
+  group_by(Animal,Locality)%>%summarise(value = sum(value))
+maxBirCounty<-BirFrom_1994to2017%>%
+  arrange(desc(value)) %>%
+  group_by(Locality) %>%arrange(Locality)
